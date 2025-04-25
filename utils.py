@@ -1,33 +1,15 @@
-# Projeto Sistema Bancário
-
-# carregamento de bibliotecas
-
-import datetime as dt
+# declaração de funções
 import pandas as pd
-
-
-# declaração de variáveis
-
-TITULO = """Banco Austral"""
-MENU = """Prezado(a) cliente, escolha uma das opções de operação disponíveis:
-
-[1] Depósito
-[2] Saque
-[3] Extrato
-[4] Sair
-
-"""
+import datetime as dt
 
 limite = 500
 extrato = 0
 numero_saque = 0
-data = dt.date.today()
+data = dt.date.today().strftime("%d-%m-%Y")
 saldo = 0
 historico = {'data_operacao': [], 'valor': [],
              'saldo_atualizado': [], 'operacao': []}
 
-
-# declaração de funções
 
 def atualizar_historico(data, valor: float, saldo_atualizado: float, operacao: str):
     """ Função que atualiza a movimentação realizada pelo cliente e armazena os dados no objeto dicionário.
@@ -61,21 +43,23 @@ def gerar_deposito():
 
         """
 
-    global saldo
+    global numero_saque, saldo
 
     valor = float(input("Informe o valor de depósito:"))
-    saldo += valor
-
-    # invocação da função que atualiza o dicionário que recebe os registros de histórico de transações.
-    atualizar_historico(data=data, valor=valor,
-                        saldo_atualizado=saldo, operacao='depósito')
 
     # processo de verificação de valores de depósito
     if valor < 0:
 
         print(f"Não é possível depositar um valor negativo.")
+        valor = 0
 
     else:
+
+        # invocação da função que atualiza o dicionário que recebe os registros de histórico de transações.
+        atualizar_historico(data=data, valor=valor,
+                            saldo_atualizado=saldo, operacao='depósito')
+
+        saldo += valor
 
         print(
             f"Operação realizada com sucesso.\n Valor depositado: R${valor:.2f}\n Saldo atualizado: R${saldo:.2f}")
@@ -134,7 +118,7 @@ def gerar_saque():
             numero_saque += 1
 
             # atualização do extrato da conta
-            atualizar_historico(data, valor=-saque,
+            atualizar_historico(data, valor=saque,
                                 saldo_atualizado=saldo, operacao='saque')
 
             # retorno para o usuário
@@ -144,12 +128,12 @@ def gerar_saque():
         elif saque <= limite and saque > saldo:
 
             print(
-                f"Operação não autorizada.\nO valor desejado é maior que o saldo disponível: {saldo:.2f}.")
+                f"Operação não autorizada.\nO valor desejado é maior que o saldo disponível: R${saldo:.2f}")
 
         else:
 
             print(
-                f"Operação não autorizada.\nPrezado(a) cliente, o valor desejado é superior ao limite de saques diário:{limite:.2f}.")
+                f"Operação não autorizada.\nPrezado(a) cliente, o valor desejado é superior ao limite de saques diário:R${limite:.2f}")
 
     return saldo, numero_saque
 
@@ -171,52 +155,18 @@ def gerar_extrato():
 
     global numero_saque
 
-    if numero_saque == 0:
+    if historico['saldo_atualizado'] == []:
         print('Prezado(a) cliente, você ainda não realizou movimentações na sua conta.')
-        tabela = 0
+        tabela = ""
 
     else:
         print('Prezado(a) cliente, segue o extrato detalhado da sua conta.\n')
         tabela = pd.DataFrame(historico)
 
+        # transformação das colunas para retorno monetário ao usuário
+        tabela['valor'] = tabela['valor'].apply(
+            lambda x: f"R${x:.2f}").astype(str)
+        tabela['saldo_atualizado'] = tabela['saldo_atualizado'].apply(
+            lambda x: f"R${x:.2f}").astype(str)
+
     return tabela
-
-
-# programa principal
-# descrição do título para apresentação dos valores
-print(f"{TITULO.center(64,'-')} \n")
-print(MENU)
-
-# escolha dos valores pelo usuário
-
-# estrutura de repetição que ocorre enquanto o usuário interagir com o sistema
-while True:
-
-    # input do usuário para ação do programa.
-    resposta = int(input())
-
-    if resposta == 1:
-
-        deposito = gerar_deposito()
-        print(MENU)
-
-    elif resposta == 2:
-
-        saldo, numero_saque = gerar_saque()
-        print(MENU)
-
-    elif resposta == 3:
-
-        tabela = gerar_extrato()
-        print(tabela)
-
-        print(MENU)
-
-    elif resposta == 4:
-
-        print("O banco Austral agradece sua visita.\nTenha um ótimo dia.")
-        break
-
-    else:
-
-        print("Opção Inválida. Escolha uma opção de 1 a 4.")
